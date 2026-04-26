@@ -1,3 +1,13 @@
+// ==UserScript==
+// @name         SillyTavern Unified Env Engine (白金大马士革版)
+// @namespace    http://tampermonkey.net/
+// @version      1.5
+// @description  支持背景管理与预设面板拖拽排序，导出修改后的【全部完整代码】一键覆盖原有脚本。全新白金深蓝大马士革 UI 风格。
+// @author       You
+// @match        *://*/*
+// @grant        none
+// ==/UserScript==
+
 $(errorCatched(async () => {
 
 function coreLogic() {
@@ -172,6 +182,7 @@ function coreLogic() {
             this.pdoc = pdoc; 
             this.pwin = pwin;
             
+
             // ---CONFIG_START---
             this.DEFAULT_CONFIG = [
           {
@@ -208,8 +219,129 @@ function coreLogic() {
                                         "kw": "出轨混沌"
                               },
                               {
+                                        "label": "桃色",
+                                        "kw": "桃色混沌"
+                              },
+                              {
                                         "label": "诡异",
                                         "kw": "诡异混沌"
+                              }
+                    ]
+          },
+          {
+                    "id": "speech",
+                    "title": "user语言",
+                    "type": "radio",
+                    "items": [
+                              {
+                                        "label": "全是话",
+                                        "kw": "user全是话"
+                              },
+                              {
+                                        "label": "不说话",
+                                        "kw": "user不说话"
+                              },
+                              {
+                                        "label": "是嘴替",
+                                        "kw": "user的嘴替"
+                              }
+                    ]
+          },
+          {
+                    "id": "real_world",
+                    "title": "真实世界",
+                    "type": "multi",
+                    "items": [
+                              {
+                                        "label": "真实变量",
+                                        "kw": "真实变量"
+                              },
+                              {
+                                        "label": "去中心化",
+                                        "kw": "去中心化"
+                              },
+                              {
+                                        "label": "真实指导",
+                                        "kw": "真实指导"
+                              },
+                              {
+                                        "label": "真实能力",
+                                        "kw": "真实能力"
+                              },
+                              {
+                                        "label": "真实关照",
+                                        "kw": "真实关照"
+                              },
+                              {
+                                        "label": "真实情绪",
+                                        "kw": "真实情绪"
+                              },
+                              {
+                                        "label": "真实逻辑",
+                                        "kw": "真实逻辑"
+                              },
+                              {
+                                        "label": "真实性爱",
+                                        "kw": "真实性爱"
+                              },
+                              {
+                                        "label": "真实繁育",
+                                        "kw": "真实繁育"
+                              },
+                              {
+                                        "label": "角色迷雾",
+                                        "kw": "角色迷雾"
+                              }
+                    ]
+          },
+          {
+                    "id": "bans",
+                    "title": "强制禁令",
+                    "type": "multi",
+                    "items": [
+                              {
+                                        "label": "异常限制",
+                                        "kw": "异常限制"
+                              },
+                              {
+                                        "label": "女尊限制",
+                                        "kw": "女尊限制"
+                              },
+                              {
+                                        "label": "人设限制",
+                                        "kw": "人设限制"
+                              },
+                              {
+                                        "label": "禁用句式",
+                                        "kw": "禁用句式"
+                              },
+                              {
+                                        "label": "禁用词语",
+                                        "kw": "禁用词语"
+                              },
+                              {
+                                        "label": "外貌限制",
+                                        "kw": "外貌限制"
+                              },
+                              {
+                                        "label": "进度限制",
+                                        "kw": "进度限制"
+                              },
+                              {
+                                        "label": "剧情限制",
+                                        "kw": "剧情限制"
+                              },
+                              {
+                                        "label": "物化限制",
+                                        "kw": "物化限制"
+                              },
+                              {
+                                        "label": "发情限制",
+                                        "kw": "发情限制"
+                              },
+                              {
+                                        "label": "昏厥限制",
+                                        "kw": "昏厥限制"
                               }
                     ]
           },
@@ -294,7 +426,7 @@ function coreLogic() {
                               },
                               {
                                         "label": "色情淫靡",
-                                        "kw": "⌨️色情淫靡文风"
+                                        "kw": "色情淫靡文风"
                               }
                     ]
           },
@@ -332,7 +464,7 @@ function coreLogic() {
                     "items": [
                               {
                                         "label": "正常观念",
-                                        "kw": "🐦‍🔥正常观念"
+                                        "kw": "正常观念"
                               },
                               {
                                         "label": "男女平等",
@@ -344,7 +476,7 @@ function coreLogic() {
                               },
                               {
                                         "label": "扶她观念",
-                                        "kw": "🐦‍🔥扶她观念"
+                                        "kw": "扶她观念"
                               }
                     ]
           },
@@ -489,6 +621,14 @@ function coreLogic() {
                                         "kw": "蜜语特化"
                               },
                               {
+                                        "label": "语言淫靡",
+                                        "kw": "语言淫靡"
+                              },
+                              {
+                                        "label": "搞笑黄段子",
+                                        "kw": "搞笑黄段子"
+                              },
+                              {
                                         "label": "粗俗淫语",
                                         "kw": "淫语特化"
                               },
@@ -573,53 +713,29 @@ function coreLogic() {
                     ]
           },
           {
-                    "id": "bans",
-                    "title": "强制禁令",
+                    "id": "nsfw_Settings",
+                    "title": "瑟瑟设定",
                     "type": "multi",
                     "items": [
                               {
-                                        "label": "异常限制",
-                                        "kw": "异常限制"
+                                        "label": "快感解析-女强",
+                                        "kw": "快感解析-女强"
                               },
                               {
-                                        "label": "禁用句式",
-                                        "kw": "禁用句式"
+                                        "label": "快感解析-通用",
+                                        "kw": "快感解析-通用"
                               },
                               {
-                                        "label": "禁用词语",
-                                        "kw": "禁用词语"
+                                        "label": "性爱姿势",
+                                        "kw": "性爱姿势"
                               },
                               {
-                                        "label": "外貌限制",
-                                        "kw": "外貌限制"
+                                        "label": "nsfw流程",
+                                        "kw": "nsfw流程"
                               },
                               {
-                                        "label": "进度限制",
-                                        "kw": "进度限制"
-                              },
-                              {
-                                        "label": "剧情限制",
-                                        "kw": "剧情限制"
-                              },
-                              {
-                                        "label": "物化限制",
-                                        "kw": "物化限制"
-                              },
-                              {
-                                        "label": "人设限制",
-                                        "kw": "人设限制"
-                              },
-                              {
-                                        "label": "发情限制",
-                                        "kw": "发情限制"
-                              },
-                              {
-                                        "label": "女尊限制",
-                                        "kw": "女尊限制"
-                              },
-                              {
-                                        "label": "昏厥限制",
-                                        "kw": "昏厥限制"
+                                        "label": "性爱场景",
+                                        "kw": "性爱场景"
                               }
                     ]
           },
@@ -634,7 +750,7 @@ function coreLogic() {
                               },
                               {
                                         "label": "摘要",
-                                        "kw": "🪪摘要"
+                                        "kw": "摘要"
                               },
                               {
                                         "label": "梦呓协定",
@@ -642,7 +758,7 @@ function coreLogic() {
                               },
                               {
                                         "label": "互动选项",
-                                        "kw": "🪪选项"
+                                        "kw": "选项"
                               },
                               {
                                         "label": "状态栏·正常",
