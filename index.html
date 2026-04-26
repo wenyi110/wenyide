@@ -1,0 +1,32 @@
+<div class="fanhua_settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>繁花 (Fanhua)</b>
+            <div class="inline-drawer-icon fa-solid fa-angle-down"></div>
+        </div>
+        <div class="inline-drawer-content">
+            <p>在这里更换 SillyTavern 的全局字体。</p>
+
+            <div class="fanhua-setting-item">
+                <label for="fanhua_font_select">当前字体</label>
+                <select id="fanhua_font_select" class="text_pole"></select>
+            </div>
+
+            <hr>
+
+            <h4>自定义字体</h4>
+            <div class="fanhua-setting-item">
+                <label for="fanhua_font_upload">上传新字体 (.ttf, .otf, .woff2)</label>
+                <input type="file" id="fanhua_font_upload" class="text_pole" accept=".ttf,.otf,.woff2">
+            </div>
+
+            <div id="fanhua_user_font_list">
+                <!-- 用户上传的字体列表将在这里动态生成 -->
+            </div>
+
+            <div class="fanhua-notes">
+                <small>提示：上传字体后，文件将被保存到服务器的 `public/extensions/fanhua/fonts` 目录下。删除字体仅会将其从列表中移除，不会删除服务器上的文件。</small>
+            </div>
+        </div>
+    </div>
+</div>
