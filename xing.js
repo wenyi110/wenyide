@@ -1,14 +1,4 @@
-// ==UserScript==
-// @name         数据库-可定制副本
-// @namespace    http://tampermonkey.net/
-// @version      1.1
-// @description  为不同的角色卡提供独立的、使用不同默认模板的数据库。通过修改 @name 和 UNIQUE_SCRIPT_ID 来创建互不干扰的副本。
-// @author       Cline (AI Assisted)
-// @match        */*
-// @grant        none
-// @注释掉的require  https://code.jquery.com/jquery-3.7.1.min.js
-// @注释掉的require  https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js
-// ==/UserScript==
+
 (function () {
     'use strict';
 
@@ -55,26 +45,16 @@
             }
         }
         catch (e) {
-            // 跨域 iframe 访问 parent.document 会抛错，这种情况不太可能出现在酒馆环境
-            // 保守地认为是油猴脚本模式
             _cachedMode = "userscript" /* RuntimeMode.Userscript */;
         }
         return _cachedMode;
     }
-    /** 是否为油猴脚本模式 */
     function isUserscriptMode() {
         return detectRuntimeMode() === "userscript" /* RuntimeMode.Userscript */;
     }
-    /** 是否为酒馆插件模式 */
     function isExtensionMode() {
         return detectRuntimeMode() === "extension" /* RuntimeMode.Extension */;
     }
-    /**
-     * 获取酒馆主窗口引用。
-     *
-     * - 油猴脚本模式：返回 window.parent（酒馆主窗口）
-     * - 插件模式：返回 window（自身就是主窗口）
-     */
     function getHostWindow() {
         if (isUserscriptMode()) {
             try {
@@ -86,11 +66,6 @@
         }
         return window;
     }
-    /**
-     * 检查是否已有另一个实例在运行（互斥检测）。
-     * 如果已有实例，返回 true（应跳过初始化）。
-     * 如果没有，标记当前实例并返回 false。
-     */
     function checkAndMarkInstance() {
         const hostWin = getHostWindow();
         if (hostWin[ACU_INSTANCE_FLAG]) {
@@ -101,18 +76,8 @@
         return false; // 首个实例
     }
 
-    /**
-     * shared/constants.ts — 环境常量
-     *
-     * 纯常量定义，不依赖运行时环境。
-     * 从 src/core/01_header_and_env.js 迁移而来。
-     */
-    /** 调试模式开关（控制 console.log 输出，不影响日志缓冲区） */
     const DEBUG_MODE_ACU = false;
-    /**
-     * 唯一脚本标识符
-     * 重要：如需创建独立副本，请修改此值为全新的唯一英文名称
-     */
+
     const UNIQUE_SCRIPT_ID = 'shujuku_v120';
     /** 脚本 ID 前缀（等同于 UNIQUE_SCRIPT_ID） */
     const SCRIPT_ID_PREFIX_ACU = UNIQUE_SCRIPT_ID;
@@ -3106,40 +3071,15 @@ $CONTENT
     function _set_jQuery_API_ACU(v) { jQuery_API_ACU = v; }
     function _set_toastr_API_ACU(v) { toastr_API_ACU = v; }
 
-    /**
-     * data/gateways/chat-gateway.ts — 聊天数组访问网关
-     *
-     * 封装 SillyTavern_API_ACU.chat、saveChat()、stopGeneration()、
-     * deleteLastMessage()、setChatMessages()、eventSource.emit() 等聊天相关操作。
-     * service / presentation 层通过本模块访问聊天数组和触发宿主动作，不再直接调用宿主 API。
-     *
-     * 所有方法内置空值防御，宿主 API 不可用时返回安全默认值或静默跳过。
-     */
-    /**
-     * 获取当前聊天数组的引用
-     * @returns 聊天消息数组，不可用时返回 []
-     */
-    function getChatArray_ACU() {
-        return SillyTavern_API_ACU?.chat || [];
-    }
-    /**
-     * 获取当前聊天数组的长度
-     * @returns 消息数量
-     */
+
     function getChatLength_ACU() {
         return SillyTavern_API_ACU?.chat?.length || 0;
     }
-    /**
-     * 获取最后一条消息的索引
-     * @returns 最后消息索引，空聊天返回 0
-     */
+  
     function getLastMessageIndex_ACU() {
         return Math.max(0, getChatLength_ACU() - 1);
     }
-    /**
-     * 触发聊天保存到宿主平台
-     * 内置存在性检查，saveChat 不可用时静默跳过
-     */
+  
     async function saveChatToHost_ACU() {
         if (typeof SillyTavern_API_ACU?.saveChat !== 'function') {
             logWarn_ACU('[ChatGateway] saveChat 不可用，跳过保存');
@@ -3147,11 +3087,7 @@ $CONTENT
         }
         await SillyTavern_API_ACU.saveChat();
     }
-    // ═══ 宿主动作 ═══
-    /**
-     * 停止当前正在进行的 AI 生成
-     * 内置存在性检查，stopGeneration 不可用时静默跳过
-     */
+   
     function stopGeneration_ACU() {
         if (typeof SillyTavern_API_ACU?.stopGeneration !== 'function') {
             logWarn_ACU('[ChatGateway] stopGeneration 不可用，跳过');
@@ -3160,10 +3096,7 @@ $CONTENT
         SillyTavern_API_ACU.stopGeneration();
         logDebug_ACU('[ChatGateway] 已调用 stopGeneration');
     }
-    /**
-     * 删除最后一条聊天消息
-     * 内置存在性检查，deleteLastMessage 不可用时静默跳过
-     */
+  
     async function deleteLastMessage_ACU() {
         if (typeof SillyTavern_API_ACU?.deleteLastMessage !== 'function') {
             logWarn_ACU('[ChatGateway] deleteLastMessage 不可用，跳过');
@@ -3171,13 +3104,7 @@ $CONTENT
         }
         await SillyTavern_API_ACU.deleteLastMessage();
     }
-    /**
-     * 通过宿主 API 更新聊天消息内容
-     * @param messages 要更新的消息数组（包含 message_id、mes、extra 等字段）
-     * @param options 更新选项（如 { refresh: 'affected' }）
-     * 内置存在性检查，setChatMessages 不可用时返回 false
-     * @returns 是否成功调用了 setChatMessages
-     */
+    
     async function setChatMessages_ACU(messages, options) {
         if (typeof SillyTavern_API_ACU?.setChatMessages !== 'function') {
             logWarn_ACU('[ChatGateway] setChatMessages 不可用');
@@ -3186,11 +3113,7 @@ $CONTENT
         await SillyTavern_API_ACU.setChatMessages(messages, options);
         return true;
     }
-    /**
-     * 触发消息更新事件通知宿主平台
-     * 优先使用 eventTypes.MESSAGE_UPDATED，降级使用字符串 'MESSAGE_UPDATED'
-     * @param messageIndex 更新的消息索引
-     */
+   
     function emitMessageUpdated_ACU(messageIndex) {
         if (!SillyTavern_API_ACU?.eventSource?.emit) {
             logWarn_ACU('[ChatGateway] eventSource.emit 不可用，跳过事件通知');
@@ -3200,27 +3123,13 @@ $CONTENT
             SillyTavern_API_ACU.eventSource.emit(SillyTavern_API_ACU.eventTypes.MESSAGE_UPDATED, messageIndex);
         }
         else {
-            // 降级：直接使用字符串事件名
+           
             SillyTavern_API_ACU.eventSource.emit('MESSAGE_UPDATED', messageIndex);
         }
     }
 
-    /**
-     * service/runtime/state-manager.ts — Re-export 门面
-     *
-     * 此文件已拆分为三处：
-     * - shared/host-api.ts        — 宿主 API 引用（SillyTavern_API、jQuery_API 等）
-     * - presentation/state/ui-refs.ts — UI jQuery 元素引用（$popupInstance、$xxx 等）
-     * - 本文件保留                — 业务状态 + 门控逻辑（settings、generationGate 等）
-     *
-     * 为保持向后兼容，本文件 re-export 所有三处的符号。
-     * 后续逐步将各文件的 import 路径改为直接引用新位置。
-     */
-    // ═══ 宿主 API re-export 已移除 ═══
-    // 消费方应直接从 shared/host-api import 宿主 API 符号
-    // ═══ ui-refs re-export 已移除（P5）═══
-    // 消费方应直接从 presentation/state/ui-refs import $xxx 变量
-    // ═══ 业务状态 + 门控逻辑（保留在本文件） ═══
+    
+  
     const NEW_MESSAGE_DEBOUNCE_DELAY_ACU = 500;
     let pendingBaseStatePlacement_ACU = false;
     let suppressWorldbookInjectionInGreeting_ACU = false;
@@ -3606,22 +3515,11 @@ $CONTENT
         return true;
     }
 
-    /**
-     * service/worldbook/injection-engine-order.ts — 注入位置与Order分配工具
-     * 从 injection-engine.ts 拆出
-     */
-    // =========================
-    // [世界书] 注入位置：强制改为 @D 系统深度（避免默认"角色定义之前"）
-    // 说明：
-    // - 根据 TavernHelper 的 LorebookEntry 类型定义：
-    //   - `position` 使用枚举值（非 @D 符号）
-    //   - "@D 系统深度"对应 position='at_depth_as_system' 且 depth 为数字
-    // - 仅用于：OutlineTable、总结条目(含外部导入)、MemoryStart/MemoryEnd
-    // =========================
+
     function buildSystemDepthInjection_ACU(depth) {
         const d = parseInt(depth, 10);
         return {
-            // @D⚙：系统身份 + 固定深度
+          
             position: 'at_depth_as_system',
             depth: Number.isFinite(d) ? d : 2,
         };
@@ -3644,15 +3542,7 @@ $CONTENT
         const exp = parseInt(expectedDepth, 10);
         return Number.isFinite(exp) ? d === exp : true;
     }
-    // [说明] 全局可读数据库条目注入位置
-    // 原"@D 系统深度"已移除，改回"角色定义之前"（position: 0）
-    // 仅重要人物/总结/大纲/记忆包裹保留 @D 系统层注入
-    // =========================
-    // [世界书] order(插入深度) 分配工具
-    // 目标：
-    // - 本插件创建的条目之间不重复
-    // - 也不与世界书中"任何现有条目"的 order 重复
-    // =========================
+
     function getEntryOrderNumber_ACU(entry) {
         const v = entry?.order;
         const n = typeof v === 'number' ? v : parseInt(String(v ?? ''), 10);
@@ -3734,17 +3624,7 @@ $CONTENT
         return s;
     }
 
-    /**
-     * service/settings/settings-readers.ts — 设置读取器（纯读取，无持久化副作用）
-     *
-     * 从 settings-service.ts 提取。这些函数只读取/规范化 settings 中的数据，
-     * 不执行保存操作。其他子模块应优先从此文件 import，而非 settings-service.ts。
-     */
-    /**
-     * 获取当前角色的专属设置。
-     * 业务逻辑：读 settings → deep merge 默认值 → 写回（确保字段完整）。
-     * 注意：此函数有"规范化写回"的副作用（补全缺失字段），但不触发持久化。
-     */
+
     function getCurrentCharSettings_ACU() {
         const charId = currentChatFileIdentifier_ACU || 'default';
         if (!settings_ACU.characterSettings) {
@@ -3779,27 +3659,11 @@ $CONTENT
         return getCurrentCharSettings_ACU().worldbookConfig;
     }
 
-    /**
-     * data/gateways/worldbook-gateway.ts — 世界书 CRUD 操作网关
-     *
-     * 封装 TavernHelper_API_ACU / SillyTavern_API_ACU 的世界书相关方法。
-     * service 层通过本模块访问世界书，不再直接调用宿主 API。
-     *
-     * 所有方法内置存在性检查，宿主 API 不可用时返回安全默认值。
-     */
-    // ═══ 可用性检查 ═══
-    /**
-     * 检查 TavernHelper 世界书 API 是否可用
-     */
+
     function isWorldbookApiAvailable_ACU() {
         return !!(TavernHelper_API_ACU && typeof TavernHelper_API_ACU.getLorebookEntries === 'function');
     }
-    // ═══ 条目 CRUD ═══
-    /**
-     * 获取指定世界书的所有条目
-     * @param bookName 世界书名称
-     * @returns 条目数组，API 不可用时返回 []
-     */
+ 
     async function getLorebookEntries_ACU(bookName) {
         if (!TavernHelper_API_ACU || typeof TavernHelper_API_ACU.getLorebookEntries !== 'function') {
             logWarn_ACU('[WorldbookGateway] getLorebookEntries 不可用，返回空数组');
@@ -3807,11 +3671,7 @@ $CONTENT
         }
         return await TavernHelper_API_ACU.getLorebookEntries(bookName);
     }
-    /**
-     * 更新指定世界书中的条目
-     * @param bookName 世界书名称
-     * @param entries 要更新的条目数组（需包含 uid）
-     */
+   
     async function setLorebookEntries_ACU(bookName, entries) {
         if (!TavernHelper_API_ACU || typeof TavernHelper_API_ACU.setLorebookEntries !== 'function') {
             logWarn_ACU('[WorldbookGateway] setLorebookEntries 不可用，跳过');
@@ -3819,11 +3679,7 @@ $CONTENT
         }
         await TavernHelper_API_ACU.setLorebookEntries(bookName, entries);
     }
-    /**
-     * 在指定世界书中创建新条目
-     * @param bookName 世界书名称
-     * @param entries 要创建的条目数组
-     */
+
     async function createLorebookEntries_ACU(bookName, entries) {
         if (!TavernHelper_API_ACU || typeof TavernHelper_API_ACU.createLorebookEntries !== 'function') {
             logWarn_ACU('[WorldbookGateway] createLorebookEntries 不可用，跳过');
@@ -3831,11 +3687,7 @@ $CONTENT
         }
         await TavernHelper_API_ACU.createLorebookEntries(bookName, entries);
     }
-    /**
-     * 删除指定世界书中的条目
-     * @param bookName 世界书名称
-     * @param uids 要删除的条目 UID 数组
-     */
+
     async function deleteLorebookEntries_ACU(bookName, uids) {
         if (!TavernHelper_API_ACU || typeof TavernHelper_API_ACU.deleteLorebookEntries !== 'function') {
             logWarn_ACU('[WorldbookGateway] deleteLorebookEntries 不可用，跳过');
@@ -3843,13 +3695,7 @@ $CONTENT
         }
         await TavernHelper_API_ACU.deleteLorebookEntries(bookName, uids);
     }
-    // ═══ 世界书列表 ═══
-    /**
-     * 获取所有可用的世界书列表
-     * 优先使用 TavernHelper_API_ACU.getLorebooks()，
-     * 降级使用 SillyTavern_API_ACU.getWorldBooks()
-     * @returns 世界书名称数组，不可用时返回 []
-     */
+
     async function listLorebooks_ACU() {
         // 优先尝试 TavernHelper
         if (TavernHelper_API_ACU && typeof TavernHelper_API_ACU.getLorebooks === 'function') {
@@ -3862,11 +3708,7 @@ $CONTENT
         logWarn_ACU('[WorldbookGateway] listLorebooks 不可用，返回空数组');
         return [];
     }
-    /**
-     * 获取所有可用的世界书列表（SillyTavern_API_ACU.getWorldBooks 的直接封装）
-     * 用于需要明确调用 SillyTavern 侧 API 的场景
-     * @returns 世界书名称数组，不可用时返回 []
-     */
+
     async function getWorldBooks_ACU$1() {
         if (SillyTavern_API_ACU && typeof SillyTavern_API_ACU.getWorldBooks === 'function') {
             return await SillyTavern_API_ACU.getWorldBooks();
@@ -3874,11 +3716,7 @@ $CONTENT
         logWarn_ACU('[WorldbookGateway] getWorldBooks 不可用，返回空数组');
         return [];
     }
-    // ═══ 角色绑定世界书 ═══
-    /**
-     * 获取当前角色的主绑定世界书名称
-     * @returns 世界书名称，不可用时返回 null
-     */
+
     async function getCurrentCharPrimaryLorebook_ACU() {
         if (!TavernHelper_API_ACU || typeof TavernHelper_API_ACU.getCurrentCharPrimaryLorebook !== 'function') {
             logWarn_ACU('[WorldbookGateway] getCurrentCharPrimaryLorebook 不可用，返回 null');
@@ -3886,11 +3724,7 @@ $CONTENT
         }
         return await TavernHelper_API_ACU.getCurrentCharPrimaryLorebook();
     }
-    /**
-     * 获取角色关联的世界书列表
-     * @param options 查询选项（如 { type: 'all' }）
-     * @returns 角色世界书数组，不可用时返回 []
-     */
+
     async function getCharLorebooks_ACU$1(options) {
         if (!TavernHelper_API_ACU || typeof TavernHelper_API_ACU.getCharLorebooks !== 'function') {
             logWarn_ACU('[WorldbookGateway] getCharLorebooks 不可用，返回空对象');
@@ -3899,30 +3733,14 @@ $CONTENT
         return await TavernHelper_API_ACU.getCharLorebooks(options || { type: 'all' });
     }
 
-    /**
-     * data/gateways/character-gateway.ts — 角色数据读取网关
-     *
-     * 封装 TavernHelper_API_ACU 的角色数据相关方法。
-     * service 层通过本模块访问角色数据，不再直接调用宿主 API。
-     *
-     * 所有方法内置存在性检查，宿主 API 不可用时返回安全默认值。
-     */
-    /**
-     * 获取当前角色的完整数据
-     * @param target 目标标识，通常为 'current'
-     * @returns 角色数据对象，不可用时返回 null
-     */
+
     function getCurrentCharData_ACU(target = 'current') {
         if (!TavernHelper_API_ACU || typeof TavernHelper_API_ACU.getCharData !== 'function') {
             return null;
         }
         return TavernHelper_API_ACU.getCharData(target);
     }
-    /**
-     * 获取当前角色绑定的所有世界书列表
-     * @param options 查询选项，默认 { type: 'all' }
-     * @returns 世界书名称数组，不可用时返回 []
-     */
+ 
     async function getCharLorebooks_ACU(options = { type: 'all' }) {
         if (!TavernHelper_API_ACU || typeof TavernHelper_API_ACU.getCharLorebooks !== 'function') {
             logWarn_ACU('[CharacterGateway] getCharLorebooks 不可用，返回空数组');
@@ -3930,12 +3748,7 @@ $CONTENT
         }
         return await TavernHelper_API_ACU.getCharLorebooks(options);
     }
-    /**
-     * 获取聊天消息（通过 TavernHelper API）
-     * @param range 消息范围
-     * @param options 查询选项
-     * @returns 消息数组，不可用时返回 []
-     */
+
     async function getChatMessages_ACU(range, options) {
         if (!TavernHelper_API_ACU || typeof TavernHelper_API_ACU.getChatMessages !== 'function') {
             logWarn_ACU('[CharacterGateway] getChatMessages 不可用，返回空数组');
@@ -3944,19 +3757,7 @@ $CONTENT
         return await TavernHelper_API_ACU.getChatMessages(range, options);
     }
 
-    /**
-     * service/runtime/template-vars/cell-utils.ts
-     * 表格单元格操作纯函数（getCellValue / normalizeOperators / compareValue / evaluateCellExpression）
-     * 从 helpers-template-vars.ts 拆出
-     */
-    /**
-     * 获取表格中指定单元格的值
-     * @param allTablesJson - 完整的表格数据对象
-     * @param tableName - 表格名
-     * @param rowName - 行标识（在任意列中匹配）
-     * @param colName - 列名（在表头中匹配）
-     * @returns {{ success: boolean, value: any, rawValue?: string, error?: string }}
-     */
+
     function getCellValue_ACU(allTablesJson, tableName, rowName, colName) {
         try {
             if (!allTablesJson || typeof allTablesJson !== 'object') {
@@ -4046,13 +3847,7 @@ $CONTENT
             }
         }
     }
-    /**
-     * 解析数值比较表达式（简化版）
-     * 支持格式：
-     * - 精确匹配：表格名/行标识/列名 > 50
-     * - 模糊匹配（某行）：表格名/行名 > 50
-     * - 模糊匹配（某列）：表格名/列名 > 50
-     */
+
     function evaluateCellExpression_ACU(expression, allTablesJson) {
         if (!expression || typeof expression !== 'string')
             return false;
@@ -4534,16 +4329,7 @@ $CONTENT
         return null;
     }
 
-    /**
-     * shared/storage-mode.ts — 存储模式工具函数
-     *
-     * 提供当前存储模式的读取和判断。
-     * 从 settings_ACU 中读取 storageMode 字段。
-     */
-    /**
-     * 获取当前存储模式
-     * 从 settings_ACU.storageMode 读取，默认 'native'
-     */
+
     function getCurrentStorageMode() {
         const mode = settings_ACU?.storageMode;
         if (mode === 'sqlite')
@@ -4563,25 +4349,7 @@ $CONTENT
         return getCurrentStorageMode() === 'native';
     }
 
-    /**
-     * data/repositories/chat-message-data-repo.ts — 消息级表格数据 CRUD
-     *
-     * 封装所有对 message.TavernDB_ACU_* 字段的底层读写操作。
-     * 纯数据层：不包含业务逻辑（合并策略、优先级判断等在 service/ 层）。
-     *
-     * 设计决策：
-     * 1. 纯函数导出（与 isolation-repo.ts、profile-repo.ts 风格一致）
-     * 2. 隔离配置作为参数传入（不引用 service 层的 state-manager）
-     * 3. 不包含业务逻辑（不做合并策略、不做优先级判断，只做字段级 CRUD）
-     * 4. 统一处理 string/object 格式（IsolatedData 可能是 JSON 字符串）
-     */
-    // ════════════════════════════════════════════════════════════════
-    // 内部辅助
-    // ════════════════════════════════════════════════════════════════
-    /**
-     * 将 IsolatedData 字段解析为对象（处理 string/object 两种格式）。
-     * 如果字段不存在或解析失败，返回 null。
-     */
+
     function parseIsolatedDataField(msg) {
         const raw = msg?.TavernDB_ACU_IsolatedData;
         if (!raw)
@@ -4623,17 +4391,7 @@ $CONTENT
         const next = arr.filter(x => x !== key);
         return { result: next, changed: next.length !== arr.length };
     }
-    // ════════════════════════════════════════════════════════════════
-    // 读取类
-    // ════════════════════════════════════════════════════════════════
-    /**
-     * 从消息读取指定隔离标签的 IsolationTagData。
-     * 统一处理 IsolatedData 字段的 string/object 两种格式。
-     *
-     * @param msg 聊天消息对象
-     * @param isolationKey 隔离标签键名
-     * @returns 标签数据，或 null（不存在时）
-     */
+
     function readIsolatedTagData_ACU(msg, isolationKey) {
         const container = parseIsolatedDataField(msg);
         if (!container)
@@ -4643,81 +4401,42 @@ $CONTENT
             return null;
         return tagData;
     }
-    /**
-     * 从消息读取旧版 IndependentData。
-     *
-     * @param msg 聊天消息对象
-     * @returns 独立表格数据，或 null
-     */
+    
     function readLegacyIndependentData_ACU(msg) {
         const data = msg?.TavernDB_ACU_IndependentData;
         if (!data || typeof data !== 'object' || Array.isArray(data))
             return null;
         return data;
     }
-    /**
-     * 从消息读取旧版 Data（标准表）。
-     *
-     * @param msg 聊天消息对象
-     * @returns 标准表容器，或 null
-     */
+
     function readLegacyStandardData_ACU(msg) {
         const data = msg?.TavernDB_ACU_Data;
         if (!data || typeof data !== 'object' || Array.isArray(data))
             return null;
         return data;
     }
-    /**
-     * 从消息读取旧版 SummaryData（摘要表）。
-     *
-     * @param msg 聊天消息对象
-     * @returns 摘要表容器，或 null
-     */
+
     function readLegacySummaryData_ACU(msg) {
         const data = msg?.TavernDB_ACU_SummaryData;
         if (!data || typeof data !== 'object' || Array.isArray(data))
             return null;
         return data;
     }
-    /**
-     * 从消息读取 Identity 字段。
-     *
-     * @param msg 聊天消息对象
-     * @returns 隔离标识字符串，或 undefined（未设置时）
-     */
+ 
     function readMessageIdentity_ACU(msg) {
         return msg?.TavernDB_ACU_Identity;
     }
-    /**
-     * 从消息读取 ModifiedKeys。
-     *
-     * @param msg 聊天消息对象
-     * @returns 修改键列表（不存在时返回空数组）
-     */
+  
     function readModifiedKeys_ACU(msg) {
         const keys = msg?.TavernDB_ACU_ModifiedKeys;
         return Array.isArray(keys) ? keys : [];
     }
-    /**
-     * 从消息读取 UpdateGroupKeys。
-     *
-     * @param msg 聊天消息对象
-     * @returns 更新组键列表（不存在时返回空数组）
-     */
+  
     function readUpdateGroupKeys_ACU(msg) {
         const keys = msg?.TavernDB_ACU_UpdateGroupKeys;
         return Array.isArray(keys) ? keys : [];
     }
-    /**
-     * 判断旧版消息是否匹配当前隔离配置。
-     * 封装隔离匹配逻辑：
-     * - 开启隔离：Identity === code 时匹配
-     * - 关闭隔离（无标签模式）：Identity 不存在时匹配
-     *
-     * @param msg 聊天消息对象
-     * @param isolationConfig 隔离配置
-     * @returns 是否匹配
-     */
+   
     function isLegacyMatchForIsolation_ACU(msg, isolationConfig) {
         const msgIdentity = msg?.TavernDB_ACU_Identity;
         if (isolationConfig.enabled) {
@@ -4725,17 +4444,7 @@ $CONTENT
         }
         return !msgIdentity;
     }
-    // ════════════════════════════════════════════════════════════════
-    // 写入类
-    // ════════════════════════════════════════════════════════════════
-    /**
-     * 写入指定隔离标签的数据到 IsolatedData 容器。
-     * 如果容器不存在会自动创建。
-     *
-     * @param msg 聊天消息对象
-     * @param isolationKey 隔离标签键名
-     * @param tagData 要写入的标签数据
-     */
+   
     function writeIsolatedTagData_ACU(msg, isolationKey, tagData) {
         if (!msg)
             return;
@@ -4744,14 +4453,7 @@ $CONTENT
         }
         msg.TavernDB_ACU_IsolatedData[isolationKey] = tagData;
     }
-    /**
-     * 确保 IsolatedData[isolationKey] 存在（初始化空槽）。
-     * 如果已存在则不覆盖。
-     *
-     * @param msg 聊天消息对象
-     * @param isolationKey 隔离标签键名
-     * @returns 该标签槽的引用
-     */
+   
     function initIsolatedTagSlot_ACU(msg, isolationKey) {
         if (!msg.TavernDB_ACU_IsolatedData || typeof msg.TavernDB_ACU_IsolatedData !== 'object') {
             msg.TavernDB_ACU_IsolatedData = {};
@@ -4765,14 +4467,7 @@ $CONTENT
         }
         return msg.TavernDB_ACU_IsolatedData[isolationKey];
     }
-    /**
-     * 同步写入旧版兼容字段（IndependentData/ModifiedKeys/UpdateGroupKeys）。
-     *
-     * @param msg 聊天消息对象
-     * @param independentData 独立表格数据
-     * @param modifiedKeys 修改键列表
-     * @param updateGroupKeys 更新组键列表
-     */
+   
     function writeLegacyCompatData_ACU(msg, independentData, modifiedKeys, updateGroupKeys) {
         if (!msg)
             return;
@@ -4780,13 +4475,7 @@ $CONTENT
         msg.TavernDB_ACU_ModifiedKeys = modifiedKeys;
         msg.TavernDB_ACU_UpdateGroupKeys = updateGroupKeys;
     }
-    /**
-     * 写入旧版 Data 和 SummaryData 字段。
-     *
-     * @param msg 聊天消息对象
-     * @param standardData 标准表数据（可选，null 则不写入）
-     * @param summaryData 摘要表数据（可选，null 则不写入）
-     */
+   
     function writeLegacyStandardAndSummary_ACU(msg, standardData, summaryData) {
         if (!msg)
             return;
@@ -4797,14 +4486,7 @@ $CONTENT
             msg.TavernDB_ACU_SummaryData = summaryData;
         }
     }
-    /**
-     * 根据隔离配置设置或删除 Identity 字段。
-     * - 隔离启用：设置 Identity 为隔离代码
-     * - 隔离关闭：删除 Identity 字段
-     *
-     * @param msg 聊天消息对象
-     * @param isolationConfig 隔离配置
-     */
+  
     function writeMessageIdentity_ACU(msg, isolationConfig) {
         if (!msg)
             return;
@@ -4815,17 +4497,7 @@ $CONTENT
             delete msg.TavernDB_ACU_Identity;
         }
     }
-    // ════════════════════════════════════════════════════════════════
-    // 删除类
-    // ════════════════════════════════════════════════════════════════
-    /**
-     * 从单条消息的所有字段中删除指定 sheetKey 的数据（新版+旧版）。
-     * 处理删除后空对象的清理。
-     *
-     * @param msg 聊天消息对象
-     * @param sheetKeys 要删除的 sheetKey 列表
-     * @returns 是否发生了变化
-     */
+   
     function purgeSheetKeysFromMessage_ACU(msg, sheetKeys) {
         if (!msg || !Array.isArray(sheetKeys) || sheetKeys.length === 0)
             return false;
@@ -5233,11 +4905,7 @@ $CONTENT
         }
         return { initialized: true };
     }
-    /**
-     * 从聊天记录加载或创建表格数据到内存。
-     * 返回 { loaded: boolean, source: 'merged'|'initialized'|'empty', error?: string }
-     * 注意：不再内部调用 refreshMergedDataAndNotify，调用方按需自行刷新。
-     */
+    
     async function loadOrCreateJsonTableFromChatHistory_ACU() {
         _set_currentJsonTableData_ACU(null);
         logDebug_ACU('Attempting to load database from chat history...');
@@ -16000,30 +15668,7 @@ $CONTENT
         }
     }
 
-    /**
-     * service/worldbook/injection-engine.ts — 世界书注入/导出/清理引擎（入口文件）
-     * 原 2,281 行代码已按阶段拆分为以下子模块：
-     *   - injection-engine-config.ts   — 放置配置常量与默认值
-     *   - injection-engine-order.ts    — 注入位置与Order分配工具
-     *   - injection-engine-state.ts    — 状态重置、目标获取、隔离前缀、条目清理、聊天历史清理
-     *   - injection-engine-entries.ts  — 大纲表、总结表、重要人物表注入
-     *   - injection-engine-custom.ts   — 自定义表格导出
-     *
-     * 本文件仅作为统一入口，re-export 所有子模块的公开 API。
-     * 外部文件的 import 路径无需修改。
-     */
-    // ═══ 放置配置常量与默认值 ═══
-
-    /**
-     * service/template/chat-scope/chat-scope-base.ts — 共享基础函数
-     * 被 chat-scope-plot.ts、chat-scope-template.ts、chat-scope-guide.ts、chat-scope-sheet.ts 共同依赖的函数
-     */
-    /**
-     * 规范化聊天作用域配置来源字符串
-     * @param source 原始来源字符串
-     * @param fallback 默认值，默认 'inherit'
-     * @returns 规范化后的来源字符串
-     */
+  
     function normalizeChatScopedConfigSource_ACU(source, fallback = 'inherit') {
         if (typeof source !== 'string')
             return fallback;
@@ -16704,13 +16349,7 @@ $CONTENT
         }
         return true;
     }
-    // =========================
-    // [新增] seedRows 解析/兜底：用于 $0 注入与"无数据初始化"场景
-    // 目标：
-    // - 新对话首次填表时，即使 currentJsonTableData_ACU 仅有表结构，也能从"内部指导表/模板"取到 seedRows
-    // - 支持隔离标签切换或初始化早期 chat 尚未加载导致的"指导表未命中"情况
-    // 注意：这里只把 seedRows 挂在表对象字段上，不会写入 content（不把模板基础数据当作真实聊天数据）
-    // =========================
+ 
     let _seedRowsTemplateCacheStr_ACU = null;
     let _seedRowsTemplateCacheObj_ACU = null;
     function getTemplateObjForSeedRows_ACU() {
@@ -17477,21 +17116,7 @@ $CONTENT
         return snapshot || sanitizeTemplateSnapshotForChat_ACU(previousTemplate);
     }
 
-    /**
-     * service/template/chat-scope/index.ts — 统一 re-export
-     * 保持外部 import { xxx } from '.../chat-scope' 路径不变
-     */
-    // 共享基础函数
-
-    /**
-     * data/storage/optimization-cache-storage.ts — 正文优化基础缓存存储适配器
-     *
-     * 封装正文优化的浏览器侧缓存操作（window 对象 + localStorage 两层）。
-     * 这是运行时缓存，不是持久化数据，丢失不影响功能正确性。
-     *
-     * 写入顺序：window 对象 → localStorage
-     * 读取优先级：window 对象 → localStorage（与原 service 层逻辑一致）
-     */
+    
     const WINDOW_CACHE_KEY = '__ACU_LAST_OPTIMIZATION_BASE__';
     const LOCAL_STORAGE_KEY = 'ACU_LAST_OPTIMIZATION_BASE';
     /**
@@ -17634,14 +17259,7 @@ $CONTENT
         }
         return placeholders;
     }
-    /**
-     * 执行正文优化
-     * @param {string} content - 需要优化的正文内容
-     * @param {object} options - 优化选项
-     * @param {number} options.currentLoop - 当前循环次数
-     * @param {string} options.userMessage - 用户消息（用于占位符）
-     * @returns {Promise<object>} 优化结果 { success, optimizations, summary, optimizedContent }
-     */
+   
     async function performContentOptimization_ACU(content, options = {}) {
         const config = settings_ACU.contentOptimizationSettings || {};
         const maxLength = config.maxOptimizations || 10;
@@ -20015,17 +19633,7 @@ $CONTENT
             $importTableSelectNone_ACU = map.$importTableSelectNone_ACU;
     }
 
-    /**
-     * presentation/dom-utils.ts — DOM 操作工具层（jQuery 隔离层）
-     *
-     * 整个 presentation 层对 jQuery 的唯一引入点。
-     * 其他 presentation 文件应从此文件 import jQuery_API_ACU，而非直接从 shared/host-api。
-     * 未来替换 jQuery 时，只需修改此文件。
-     */
-    // ─── jQuery 引入（唯一入口）─────────────────────────────
-
-    // plot-editors.ts
-    // 从 02_shared_editors_and_selectors.js 整体迁入
+ 
     function renderPromptSegments_ACU(segments) {
         if (!$charCardPromptSegmentsContainer_ACU)
             return;
@@ -20589,24 +20197,7 @@ $CONTENT
     function hideOptimizationOverlay_ACU() {
         jQuery_API_ACU('#acu-optimization-overlay').remove();
     }
-    /**
-     * 替换酒馆消息内容
-     * @param {number} messageIndex - 消息索引
-     * @param {string} newContent - 新内容
-     */
 
-    /**
-     * service/chat/chat-service.ts — 聊天数据服务
-     *
-     * 中转 data/gateways/chat-gateway 的所有方法。
-     * presentation 层通过本模块访问聊天数据，不再直接调用 gateway。
-     * 后续可在此层统一添加日志、埋点、缓存等增值逻辑。
-     */
-    // ─── 业务逻辑函数（从 presentation 层搬迁） ───
-    /**
-     * 替换聊天消息内容（正文优化核心逻辑）
-     * 从 presentation/components/optimization-ui/optimization-ui-exec.ts 搬迁
-     */
     async function replaceChatMessage_ACU(messageIndex, newContent, options = {}) {
         try {
             logDebug_ACU(`[正文优化] replaceChatMessage_ACU 开始执行, messageIndex=${messageIndex}, newContent长度=${newContent?.length || 0}`);
@@ -21841,14 +21432,7 @@ $CONTENT
         }
     }
 
-    /**
-     * presentation/components/pipeline-ui-helpers.ts
-     * 包装 service 层的 pipeline 函数，在调用后自动刷新 UI
-     */
-    /**
-     * 刷新合并数据后自动通知前端 + 刷新可视化编辑器 + 刷新 UI 选择器和状态面板
-     * presentation 层唯一入口：所有需要"刷新数据+刷新UI"的地方都调这个。
-     */
+  
     async function refreshMergedDataAndNotifyWithUI_ACU() {
         const result = await refreshMergedDataAndNotify_ACU();
         // 1. 通知前端 (iframe context)
@@ -21890,21 +21474,7 @@ $CONTENT
         return result;
     }
 
-    /**
-     * service/table/update-scheduler.ts — 自动更新调度核心逻辑
-     * 从 presentation/triggers/settings-ui-sync/settings-ui-trigger.ts 的 triggerAutomaticUpdateIfNeeded_ACU 中提取
-     *
-     * 只负责「遍历表格检查更新条件 + 构建 tablesToUpdate 列表 + 分组」，不涉及 UI（toast/status）。
-     */
-    /**
-     * 构建自动更新计划：遍历所有表格，检查每个表的独立更新条件，返回需要更新的表列表和分组
-     *
-     * @param liveChat - 当前聊天记录数组
-     * @param tableData - 当前表格数据（currentJsonTableData_ACU）
-     * @param settings - 当前设置
-     * @param isolationKey - 当前隔离标签键名
-     * @returns AutoUpdatePlan 包含 tablesToUpdate 和 updateGroups
-     */
+   
     function buildAutoUpdatePlan_ACU(liveChat, tableData, settings, isolationKey) {
         const tablesToUpdate = [];
         const sheetKeys = getSortedSheetKeys_ACU(tableData);
@@ -22246,30 +21816,7 @@ $CONTENT
         return validSaved;
     }
 
-    /**
-     * service/host/host-state-service.ts — 宿主运行时状态服务
-     *
-     * 中转 data/gateways/host-state-gateway 的所有方法。
-     * presentation 层通过本模块访问宿主运行时状态，不再直接调用 gateway。
-     * 后续可在此层统一添加日志、埋点、状态缓存等增值逻辑。
-     */
-
-    /**
-     * service/runtime/message-handler.ts — 新消息处理核心逻辑
-     * 从 presentation/triggers/settings-ui-sync/settings-ui-connect.ts 的 handleNewMessageDebounced_ACU 中提取
-     *
-     * 只负责「验证新消息是否应该触发更新 + 决定执行模式」，不涉及 UI（toast/防抖定时器）。
-     */
-    /**
-     * 评估新消息事件，决定应该执行什么操作
-     *
-     * @param liveChat - 当前聊天记录数组
-     * @param isAutoUpdating - 是否正在自动更新
-     * @param coreApisReady - 核心 API 是否就绪
-     * @param wasStoppedByUser - 是否被用户终止
-     * @param contentOptimizationSettings - 正文优化设置
-     * @returns MessageActionResult 包含 action 和 reason
-     */
+  
     function evaluateNewMessageAction_ACU(liveChat, isAutoUpdating, coreApisReady, wasStoppedByUser, contentOptimizationSettings) {
         if (wasStoppedByUser) {
             return { action: 'skip', reason: 'Skipping update check after user abort' };
@@ -22372,16 +21919,7 @@ $CONTENT
         const hostWin = getHostWindow();
         const mode = isExtensionMode() ? '插件' : '油猴脚本';
         logDebug_ACU(`[CoreAPI] 运行模式: ${mode}, hostWin === window: ${hostWin === window}`);
-        // ═══════════════════════════════════════════════════════════════
-        // 插件模式特殊处理：主窗口的 window.SillyTavern 只有 {libs, getContext}
-        // 所有真正的 API（chatId/eventSource/eventTypes/chat/saveChat 等）必须通过
-        // SillyTavern.getContext() 才能拿到，而且 getContext() 返回的是"当前快照"，
-        // 属性值会随酒馆状态变化。所以用 Proxy 包装：每次属性读取都重新调用 getContext()
-        // 取最新快照，这样既不用改所有消费者代码，又保证读到最新值。
-        //
-        // 油猴脚本模式下，iframe 的 window.SillyTavern 本身就是扁平化的 API 对象
-        // （由酒馆助手封装），保持原样直接赋值。
-        // ═══════════════════════════════════════════════════════════════
+      
         let stApi;
         if (isExtensionMode()) {
             const rawST = hostWin.SillyTavern || window.SillyTavern;
@@ -22419,19 +21957,7 @@ $CONTENT
             }
         }
         else {
-            // ═══════════════════════════════════════════════════════════════
-            // 油猴脚本模式：运行在酒馆助手创建的 iframe 中。
-            //
-            // 关键事实：iframe 自身的 window.SillyTavern 是酒馆助手注入的
-            // 扁平化 API 对象（包含 chatId/eventSource/eventTypes 等），
-            // 而 window.parent（hostWin）上的 SillyTavern 只有
-            // {libs, getContext} 骨架，不含业务字段。
-            //
-            // 因此必须优先使用 iframe 自身的对象，把 parent 作为 fallback。
-            // 这与旧版 userscript 的行为一致：
-            //   SillyTavern_API_ACU = typeof SillyTavern !== 'undefined'
-            //     ? SillyTavern : parentWin.SillyTavern;
-            // ═══════════════════════════════════════════════════════════════
+           
             const iframeST = typeof window.SillyTavern !== 'undefined' ? window.SillyTavern : undefined;
             const parentST = typeof hostWin.SillyTavern !== 'undefined' ? hostWin.SillyTavern : undefined;
             // 优先使用 iframe 自身的扁平化 API（含 chatId 等业务字段），
@@ -22820,18 +22346,7 @@ $CONTENT
             }
         });
     }
-    /**
-     * HTML转义
-     */
-    // === 以下为 presentation 层独有的 UI 函数（DOM 操作/渲染）===
-
-    // replaceChatMessage_ACU 和 getOriginalContent_ACU 已搬迁到 service/chat/chat-service.ts
-    // 通过文件顶部的 re-export 保持外部调用方兼容
-    /**
-     * 重新优化消息
-     * @param {number} messageIndex - 消息索引
-     * @returns {Promise<boolean>} 是否成功
-     */
+  
     async function reoptimizeMessage_ACU(messageIndex) {
         const config = settings_ACU.contentOptimizationSettings || {};
         _set_contentOptimizationAbortRequested_ACU(false);
@@ -23187,17 +22702,7 @@ $CONTENT
             _set_contentOptimizationAbortRequested_ACU(false);
         }
     }
-    /**
-     * 执行正文优化（手动确认模式，逐轮确认）
-     * @param {number} messageIndex - 消息索引
-     * @param {string} content - 原始内容
-     * @param {string} userMessage - 用户消息
-     * @param {number} totalLoops - 总循环次数
-     * @param {number} currentLoop - 当前循环次数（内部使用）
-     * @param {string} currentContent - 当前内容（内部使用）
-     * @param {Array} totalOptimizations - 累计优化项（内部使用）
-     * @returns {Promise<boolean>} 是否成功
-     */
+    
     async function executeContentOptimizationWithConfirm_ACU(messageIndex, content, userMessage, totalLoops, currentLoop = 1, currentContent = null, totalOptimizations = []) {
         // 使用传入的当前内容，或者原始内容
         let workingContent = currentContent !== null ? currentContent : content;
@@ -23504,22 +23009,7 @@ $CONTENT
         logDebug_ACU('[剧情推进] 已恢复AI指令预设（charCardPrompt）。');
     }
 
-    /**
-     * presentation/components/optimization-ui/index.ts — 统一 re-export
-     */
-
-    /**
-     * service/worldbook/worldbook-service.ts — 世界书操作服务
-     *
-     * 中转 data/gateways/worldbook-gateway 的所有方法。
-     * presentation 层通过本模块访问世界书，不再直接调用 gateway。
-     * 后续可在此层统一添加日志、埋点、操作审计等增值逻辑。
-     */
-    // ─── 业务逻辑函数（从 presentation 层搬迁） ───
-    /**
-     * 从世界书条目中加载导入的 JSON 数据
-     * 从 presentation/triggers/import-process.ts 搬迁
-     */
+    
     async function loadImportedJsonDataFromLorebook_ACU(targetLorebook, modeSuffix = '-Selected') {
         if (!isWorldbookApiAvailable_ACU() || !targetLorebook)
             return null;
@@ -24688,28 +24178,7 @@ $CONTENT
         manualSelector.selectNone();
     }
 
-    /**
-     * service/table/update-orchestrator.ts — 表格更新编排（service 层：纯业务逻辑）
-     * 从 presentation/triggers/update-process.ts 提取。
-     * service 层不驱动 UI，只返回结果/状态，presentation 层根据返回值自行决定 UI 操作。
-     */
-    // ============================================================
-    // 核心业务函数
-    // ============================================================
-    /**
-     * 加载批次基础数据：从聊天记录中为每个表格查找最新数据
-     * 纯业务逻辑，不涉及任何 UI 操作
-     */
-    /**
-     * [辅助] 从聊天记录加载旧数据覆盖 sheet 后，恢复指导表基底中的关键结构字段。
-     *
-     * 背景：loadBatchBaseData_ACU 从聊天记录中加载旧数据时，会整体覆盖 mergedBatchData[sheetKey]。
-     * 但指导表基底中可能包含用户在可视化编辑器中修改过的 sourceData.ddl 和表头（content[0]），
-     * 这些结构信息不应该被聊天记录中的旧数据覆盖。
-     *
-     * 只恢复 sourceData（含 DDL）和表头（content[0]），其他字段（name/uid/updateConfig/exportConfig）
-     * 保留聊天记录中的值，因为它们可能在聊天过程中被合法修改。
-     */
+   
     function restoreGuideStructure(mergedSheet, guideSheet) {
         if (!guideSheet || typeof guideSheet !== 'object')
             return;
@@ -25624,21 +25093,7 @@ $CONTENT
             $btn.prop('disabled', !enabled);
     }
 
-    /**
-     * service/import/import-executor.ts — 外部导入核心业务逻辑
-     * 从 presentation/triggers/import-process.ts 的 processImportedTxtAsUpdates_ACU 中提取
-     *
-     * 只负责「初始化/恢复导入数据库」和「最终注入+清理」，不涉及 UI（toast/按钮状态）。
-     */
-    /**
-     * 初始化或恢复导入数据库
-     *
-     * @param importTarget - 导入目标世界书名称
-     * @param selectedSheetKeys - 选中的表格 key 列表
-     * @param allChunks - 所有分块数据
-     * @param selectionSig - 选择签名（用于断点续行校验）
-     * @returns ImportInitResult
-     */
+    
     async function initImportDatabase_ACU(importTarget, selectedSheetKeys, allChunks, selectionSig) {
         const modeSuffix = '-Selected';
         const statusStorageKey = STORAGE_KEY_IMPORTED_STATUS_ACU;
@@ -26079,16 +25534,7 @@ $CONTENT
             showToastr_ACU('error', '删除注入条目时出错。', { acuToastCategory: ACU_TOAST_CATEGORY_ACU.ERROR });
         }
     }
-    // [T176] getImportWorldbookTarget_ACU 已移到 presentation/components/import-status-ui.ts
-    // loadImportedJsonDataFromLorebook_ACU, saveImportedJsonDataToLorebook_ACU, deleteImportedJsonDataFromLorebook_ACU
-    // 已搬迁到 service/worldbook/worldbook-service.ts
-    // 通过文件顶部的 re-export 保持外部调用方兼容
-
-    // popup-bindings-status.ts
-    // 状态&操作标签页事件绑定（对话编辑器 + 设置参数自动保存 + checkbox）
-    /**
-     * 绑定状态&操作标签页的所有事件（对话编辑器 + 设置参数 + checkbox + 手动更新）
-     */
+   
     async function bindStatusEvents_ACU() {
         // --- [新增] 对话编辑器事件绑定 ---
         $popupInstance_ACU.on('click', `.${SCRIPT_ID_PREFIX_ACU}-add-prompt-segment-btn`, function () {
@@ -28747,23 +28193,7 @@ $CONTENT
         const states = getWindowStates_ACU();
         return states[windowId] || null;
     }
-    /**
-     * 创建独立浮动窗口
-     * @param {object} options
-     * @param {string} options.id - 窗口唯一ID
-     * @param {string} options.title - 窗口标题
-     * @param {string} options.content - 窗口内容HTML
-     * @param {number} [options.width=900] - 初始宽度
-     * @param {number} [options.height=700] - 初始高度
-     * @param {boolean} [options.modal=false] - 是否为模态窗口（带遮罩）
-     * @param {boolean} [options.resizable=true] - 是否可调整大小
-     * @param {boolean} [options.maximizable=true] - 是否可最大化
-     * @param {boolean} [options.startMaximized=false] - 是否启动时全屏
-     * @param {boolean} [options.rememberState=true] - 是否记住窗口状态
-     * @param {function} [options.onClose] - 关闭回调
-     * @param {function} [options.onReady] - 窗口就绪回调（DOM已插入）
-     * @returns {jQuery} 窗口jQuery对象
-     */
+   
     function createACUWindow(options) {
         const { id, title = '窗口', content = '', width = 900, height = 700, modal = false, resizable = true, maximizable = true, startMaximized = false, rememberState = true, // 默认记住窗口状态
         onClose, onReady } = options;
@@ -29082,26 +28512,9 @@ $CONTENT
             ACU_WindowManager.unregister(id);
         }
     }
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // ███ 独立窗口系统结束 ███
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // --- [Legacy] 旧版"单份设置/单份模板"存储键（仅用于迁移；新版本不再直接读写它们） ---
-
-    /**
-     * presentation/pages/visualizer-main-save.ts
-     * 可视化编辑器保存变更
-     */
-    /**
-     * presentation/pages/visualizer-main.ts — 可视化编辑器主区域 + 保存
-     * 从 visualizer.ts 拆出
-     */
+   
     async function saveVisualizerChanges_ACU(saveToTemplate = false) {
-        // 1. Check for Inheritance (Structure Mismatch)
-        // Compare _acuVisState.tempData with original TABLE_TEMPLATE_ACU
-        // But user might have just edited tempData to be different from template.
-        // The requirement says: "check mismatch between new current table data and the CURRENTLY USED TEMPLATE".
-        // If mismatch, prompt inheritance.
-        // [新增] 按照用户调整的顺序重新组织数据
+      
         const orderedData = {};
         const orderedKeys = getOrderedSheetKeys_ACU();
         // 先添加非表格数据（如 mate）
@@ -29425,13 +28838,7 @@ $CONTENT
         // Close
         closeACUWindow(`${SCRIPT_ID_PREFIX_ACU}-visualizer-window`);
     }
-    // --- [Inheritance Logic (Legacy Removed)] ---
-
-    /**
-     * presentation/pages/visualizer-styles.ts
-     * 可视化编辑器样式定义
-     * 从 visualizer.ts 拆出的纯 CSS 模板字符串
-     */
+    
     const VISUALIZER_CSS_ACU = `
     /* ═══════════════════════════════════════════════════════════════
        墨韵清雅 - 可视化编辑器
@@ -31029,17 +30436,7 @@ $CONTENT
             }
         });
     }
-    // [新增] 表格顺序管理 - 存储有序的表格键列表
-
-    /**
-     * service/worldbook/worldbook-cleanup.ts — 世界书条目清理（service 层：纯业务逻辑）
-     * 从 presentation/triggers/data-admin-ui.ts 提取。
-     */
-    /**
-     * 删除聊天数据后清理世界书中的 Wrapper、PersonsHeader、Memory 条目
-     * 纯业务逻辑，不涉及任何 UI 操作
-     * @returns 删除的条目总数
-     */
+    
     async function cleanupWorldbookEntriesAfterDataDeletion_ACU() {
         let totalDeleted = 0;
         // 删除 Wrapper 条目
@@ -31500,18 +30897,7 @@ $CONTENT
         };
         input.click();
     }
-    // --- [New Visualizer & Inheritance Module] ---
-    // CSS for the Visualizer - 墨韵清雅设计系统（古典中国风）
-
-    /**
-     * service/summary/merge-executor.ts — 手动合并纪要核心执行逻辑
-     * 从 presentation/triggers/update-trigger.ts 的 handleManualMergeSummary_ACU 中提取
-     *
-     * 只负责「构建 prompt + 调用 AI + 解析结果 + 累积合并」，不涉及 UI（toast/按钮/进度条）。
-     */
-    /**
-     * 从指定范围之前的原表格数据中取最近 N 条记录
-     */
+    
     function pickLastRowsBeforeIndex_ACU(allRows, beforeIndex, count) {
         if (!Array.isArray(allRows) || allRows.length === 0)
             return [];
