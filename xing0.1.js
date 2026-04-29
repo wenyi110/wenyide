@@ -254,6 +254,78 @@
         },
         orderNo: 0
     };
+ /**
+     * 世界设定
+     */
+    const globalStateSheet = {
+        uid: "sheet_dCudvUnH",
+        name: "世界设定",
+        sourceData: {
+            note: "记录当前世界的设定。此表有且仅有一行。\n- 列1: 世界风俗 - 该世界的人文风俗。\n- 列2: 贞操观念 - 该世界的贞操观念。（不会轻易改变）\n- 列3: 女性身体设定 - 女性在身体上有着怎样的设定和变化。\n- 列4: 女性特殊设定- 对女性的性格，观念，爱好进行记录。",
+            initNode: "插入一条关于当前世界状态的记录。",
+            deleteNode: "禁止删除。",
+            updateNode: "当女性改变时，要改变女性的设定。\nSQL示例: UPDATE global_state SET current_location = '新地点', prev_scene_time = cur_time, cur_time = '2024-03-15 16:00', elapsed_time = '约1小时' WHERE row_id = 1;",
+            insertNode: "禁止操作。",
+            ddl: `CREATE TABLE global_state ( -- 世界设定
+  row_id INTEGER PRIMARY KEY, -- 行号
+  World Customs TEXT -- 世界风俗
+  Concept of chastity TEXT --贞操观念
+ Female body settings TEXT --女性身体设定
+ Female special settings TEXT --女性特殊设定
+);`
+        },
+        content: [
+            [
+                "row_id",
+                "世界风俗",
+                "贞操观念",
+                "女性身体设定",
+                "女性特殊设定"
+            ]
+        ],
+        updateConfig: {
+            uiSentinel: -1,
+            contextDepth: -1,
+            updateFrequency: -1,
+            batchSize: -1,
+            skipFloors: -1
+        },
+        exportConfig: {
+            enabled: false,
+            splitByRow: false,
+            entryName: "世界设定",
+            entryType: "constant",
+            keywords: "",
+            preventRecursion: true,
+            injectionTemplate: "",
+            extraIndexEnabled: false,
+            extraIndexEntryName: "世界设定-索引",
+            extraIndexColumns: [],
+            extraIndexColumnModes: {},
+            extraIndexInjectionTemplate: "",
+            entryPlacement: {
+                position: "at_depth_as_system",
+                depth: 2,
+                order: 10000
+            },
+            extraIndexPlacement: {
+                position: "at_depth_as_system",
+                depth: 2,
+                order: 10010
+            },
+            fixedEntryPlacement: {
+                position: "before_char",
+                depth: 2,
+                order: 99981
+            },
+            fixedIndexPlacement: {
+                position: "before_char",
+                depth: 2,
+                order: 99985
+            }
+        },
+        orderNo: 0
+    };
 
     /**
      * 主角信息 — 默认表定义
