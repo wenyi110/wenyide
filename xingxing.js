@@ -255,10 +255,10 @@
         orderNo: 0
     };
  /**
-     * 世界设定
+     * 世界设定 — 默认表定义
      */
     const globalStateSheet = {
-        uid: "sheet_dCudvUnH",
+        uid: "sheet_world setting",
         name: "世界设定",
         sourceData: {
             note: "记录当前世界的设定。此表有且仅有一行。\n- 列1: 世界风俗 - 该世界的人文风俗。\n- 列2: 贞操观念 - 该世界的贞操观念。（不会轻易改变）\n- 列3: 女性身体设定 - 女性在身体上有着怎样的设定和变化。\n- 列4: 女性特殊设定- 对女性的性格，观念，爱好进行记录。",
